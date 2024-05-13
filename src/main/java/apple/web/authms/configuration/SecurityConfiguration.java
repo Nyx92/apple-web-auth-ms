@@ -3,7 +3,6 @@ package apple.web.authms.configuration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -12,13 +11,18 @@ import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.config.http.SessionCreationPolicy;
+// Explanation of SecurityConfiguration:
+// Request Filtering: When a request comes into your application, Spring Security intercepts it before it reaches any controller.
+// The security filters configured in  SecurityFilterChain are applied. If the filters require a valid JWT for certain or all paths, the incoming requests must include a valid JWT in their headers.
 
 
-
-// This tells Spring that the class can contain bean definitions.
+// This tells Spring that the class is a factory method and can contain bean definitions.
 @Configuration
-// provides the Spring MVC integration. It also extends WebSecurityConfigurerAdapter, allowing for customization of security configurations.
+// @EnableWebSecurity is a marker annotation that is used to enable Spring Security’s web security support and provide the Spring MVC integration.
+// It essentially signals to Spring Framework to start considering the security configurations that you have set up in any WebSecurityConfigurer or more commonly, through HttpSecurity configurations.
 @EnableWebSecurity
+// @EnableMethodSecurity allows you to add security around methods based on annotations. It enables support for method-level security settings.
+// allows you to add e.g., @PreAuthorize("hasRole('ROLE_ADMIN')") in your methods
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfiguration {
 
@@ -79,7 +83,7 @@ public class SecurityConfiguration {
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        // Additional configuration for the converter if necessary
+        converter.setJwtGrantedAuthoritiesConverter(new JwtAuthConverter()); // Set your custom converter here
         return converter;
     }
 }
