@@ -26,14 +26,22 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
     // The JwtGrantedAuthoritiesConverter class converts Jwt to Collection<GrantedAuthority> where GrantedAuthority contains String getAuthority()
     private final JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
 
+    //  The method signature shows that it takes a Jwt object as input and returns an AbstractAuthenticationToken
+    //  Basically what this does is to combine authorities in claims together, identified using jwtGrantedAuthoritiesConverter and extractResourceRoles on a single jwt
     @Override
     public AbstractAuthenticationToken convert(@NonNull Jwt jwt) {
+        //  It combines authorities from two sources: standard ones extracted by jwtGrantedAuthoritiesConverter (which typically reads scopes or similar claims from the JWT)
+        //  and custom ones derived from our application-specific method extractResourceRoles.
+        //  Stream.concat takes two streams and joins them together into one stream.
         Collection<GrantedAuthority> authorities = Stream.concat(
+                        // calling .stream() on this collection converts it into a Stream<GrantedAuthority>.
+                        // This stream is a sequence of GrantedAuthority objects that can be processed further using stream operations.
                         jwtGrantedAuthoritiesConverter.convert(jwt).stream(),
                         extractResourceRoles(jwt).stream()
                 )
                 .collect(Collectors.toSet());
 
+        // It creates a new instance of JwtAuthenticationToken, which is a concrete implementation of AbstractAuthenticationToken, initializing it with the combined authorities and the principal's name derived from the JWT.
         return new JwtAuthenticationToken(jwt, authorities, getPrincipalClaimName(jwt));
     }
 
@@ -42,7 +50,7 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
         if (resourceAccess == null) {
             return Set.of();
         }
-        Map<String, Object> resource = (Map<String, Object>) resourceAccess.get("my-apple-web-rest-api");
+        Map<String, Object> resource = (Map<String, Object>) resourceAccess.get("my-apple-web");
         if (resource == null) {
             return Set.of();
         }
@@ -60,52 +68,4 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
             return jwt.getClaimAsString("sub");  // Fallback to "sub" if "preferred_username" is not present
         }
     }
-}
-
-@Component
-public class JwtAuthConverter implements Converter <Jwt, AbstractAuthenticationToken> {
-
-    private final JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter =
-            new JwtGrantedAuthoritiesConverter();
-
-    private final String principleAttribute = "preferred_username";
-
-    @Override
-    public AbstractAuthenticationToken convert(@NonNull Jwt source) {
-        Collection<GrantedAuthority> authorities = Stream.concat(
-                        jwtGrantedAuthoritiesConverter.convert(jwt).stream(),
-                        extractResourceRoles(jwt).stream()
-                )
-                .collect(Collectors.toSet());
-        return new JwtAuthenticationToken(jwt, authorities, getPrincipleClaimName(jwt));
-    }
-
-    private Collection<? extends GrantedAuthority> extractResourceRoles(Jwt jwt) {
-        Map<String, Object> resourceAccess;
-        Map<String, Object> resource;
-        Collection<String> resourceRoles;
-        if (jwt.getClaim("resource_access") == null) {
-            return Set.of();
-        }
-        resourceAccess = jwt.getClaim("resource_access");
-        if (resourceAccess.get("my-apple-web-rest-api") == null) {
-            return Set.of();
-        }
-        resource = Map<String, Object>) resourceAccess.get("my-apple-web-rest-api");
-        resourceRoles = (Collection<String>)  resource.get("roles");
-        return resourceRoles
-                .stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                .collect(Collectors.toSet());
-    }
-
-    private String getPrincipleClaimName(Jwt jwt) {
-        String claimName = JwtClaimNames.SUB;
-        if (principleAttribute !=null) {
-            claimName = principleAttribute;
-        }
-        return jwt.getClaim(claimName);
-
-    }
-
 }
