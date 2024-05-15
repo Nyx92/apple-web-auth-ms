@@ -1,4 +1,4 @@
-package apple.web.authms.controller;
+package apple.web.authms.configuration;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.lang.NonNull;
@@ -34,9 +34,10 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
         //  and custom ones derived from our application-specific method extractResourceRoles.
         //  Stream.concat takes two streams and joins them together into one stream.
         Collection<GrantedAuthority> authorities = Stream.concat(
-                        // calling .stream() on this collection converts it into a Stream<GrantedAuthority>.
-                        // This stream is a sequence of GrantedAuthority objects that can be processed further using stream operations.
+                        // The jwtGrantedAuthoritiesConverter extracts authorities based on standard JWT claims such as "scope" or "scp". For instance, if a JWT contains a claim like "scope": "read write",
+                        // this converter would produce authorities like [SCOPE_read, SCOPE_write].
                         jwtGrantedAuthoritiesConverter.convert(jwt).stream(),
+                        // extract additional, custom authorities specific to keycloak
                         extractResourceRoles(jwt).stream()
                 )
                 .collect(Collectors.toSet());

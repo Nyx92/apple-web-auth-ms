@@ -3,14 +3,21 @@ package apple.web.authms.configuration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtDecoders;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.config.http.SessionCreationPolicy;
+
+import java.util.Collection;
+import java.util.Collections;
 // Explanation of SecurityConfiguration:
 // Request Filtering: When a request comes into your application, Spring Security intercepts it before it reaches any controller.
 // The security filters configured in  SecurityFilterChain are applied. If the filters require a valid JWT for certain or all paths, the incoming requests must include a valid JWT in their headers.
@@ -57,7 +64,7 @@ public class SecurityConfiguration {
                 .oauth2ResourceServer(oauth2 -> oauth2
                         // Specifies that JWT (JSON Web Token) will be used to handle authentication. I
                         .jwt(jwt -> jwt
-                                // Configures a custom JwtAuthenticationConverter that converts a JWT into an Authentication object,
+                                //  resulting JWT object will be converted to a JwtAuthenticationToken (an Authentication object) using your JwtAuthConverter,
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter())
                                 // Sets a custom JwtDecoder that is responsible for decoding and validating JWTs.
                                 .decoder(jwtDecoder())
@@ -74,16 +81,33 @@ public class SecurityConfiguration {
         return http.build();
     }
 
+    // JwtDecoder: This is set up to decode the JWT. It checks the JWT’s signature and parses the JWT to extract claims.
+    // The JwtDecoder you configure is responsible for ensuring the JWT is valid and trustworthy,
+    // typically by validating the signature against a key set obtained from the issuer's well-known configuration URL.
     @Bean
     public JwtDecoder jwtDecoder() {
         // Specify the configuration for your JWT decoder here, often you will fetch it from application properties
             return JwtDecoders.fromOidcIssuerLocation(keycloakIssuerUri);
     }
 
+    // The purpose here is to convert a valid JWT (already decoded) into an Authentication object that Spring Security can use for authorization decisions.
+    // Extracting standard claims like scopes or roles from the JWT to form Spring Security GrantedAuthority objects.
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(new JwtAuthConverter()); // Set your custom converter here
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
+            // Convert the Jwt to an AbstractAuthenticationToken
+            AbstractAuthenticationToken authToken = new JwtAuthConverter().convert(jwt);
+
+            // Ensure that the authToken and its authorities are not null before returning the authorities
+            if (authToken != null && authToken.getAuthorities() != null) {
+                return authToken.getAuthorities();
+            } else {
+                // Return an empty list of authorities if null to prevent NullPointerException
+                return Collections.emptyList();
+            }
+        });
         return converter;
     }
+
 }
