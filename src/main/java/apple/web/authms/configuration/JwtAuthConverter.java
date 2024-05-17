@@ -61,6 +61,7 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
                 .collect(Collectors.toSet());
     }
 
+    // The principal name uniquely identifies the user within your system. It’s extracted from the JWT and set as part of the JwtAuthenticationToken.
     private String getPrincipalClaimName(Jwt jwt) {
         // Check if the "preferred_username" claim is present
         if (jwt.getClaims().containsKey("preferred_username")) {
