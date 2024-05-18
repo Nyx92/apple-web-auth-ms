@@ -1,17 +1,51 @@
 package apple.web.authms.controller;
+import apple.web.authms.dto.LoginRequestDTO;
+import apple.web.authms.dto.AuthResponseDTO;
+import apple.web.authms.service.KeycloakService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 
 // This annotation is used on a class to make it handle web requests.
 // It means that whatever is returned by methods in the class is directly
 // sent back to the web browser or whatever made the web request, not as HTML or a webpage, but as data (like JSON).
 @RestController
 // This annotation is used on a class or method to specify which URL it should respond to.
-@RequestMapping("api/v1/demo")
+@RequestMapping("api/v1/keycloak")
 public class KeycloakController {
-    //  If you put @GetMapping("/hello") in a class with @RequestMapping("api/v1/demo"), that method will handle requests that go to "mywebsite.com/api/v1/demo/hello".
+
+    // Making the KeycloakService field private ensures that it is only accessible within the KeycloakController class. This is a fundamental principle of encapsulation, which helps in hiding internal implementation.
+    // This makes the class easier to change and maintain because changes to the service usage do not affect other parts of the codebase.
+    // Marking the KeycloakService field as final ensures that the reference to the service cannot be changed, ensuring that it is thread-safe by default. There is no risk of another thread changing the reference
+    // It clearly indicates that this dependency is an essential part of the class’s state and should not be replaced.
+    private final KeycloakService keycloakService;
+
+    // Constructor Injection. With constructor injection, you can declare your dependencies as final, which enforces immutability.
+    // This means that the injected dependency cannot be changed after the object is constructed, leading to safer and more predictable code.
+    // Constructor injection makes it explicit that the class cannot be instantiated without its required dependencies
+    // Constructor injection makes it straightforward to create instances of your class with mock dependencies. You simply pass the mock objects to the constructor.
+    @Autowired
+    public KeycloakController(KeycloakService keycloakService) {
+        this.keycloakService = keycloakService;
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginRequestDTO) {
+        // The try block in Java is used for exception handling. It allows you to write code that might throw exceptions, and to handle those exceptions gracefully, rather than letting the program crash.
+        try {
+            String token = keycloakService.authenticate(loginRequestDTO);
+            return ResponseEntity.ok(new AuthResponseDTO(token));
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body("Invalid credentials");
+        }
+    }
+
     @GetMapping
     @PreAuthorize("hasRole('client_user')")
     public String hello() {

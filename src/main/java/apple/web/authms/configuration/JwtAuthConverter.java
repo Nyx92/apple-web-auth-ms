@@ -1,5 +1,6 @@
 package apple.web.authms.configuration;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -22,6 +23,9 @@ import java.util.stream.Stream;
 // AbstractAuthenticationToken is a base class for Authentication implementations that are used to store details about the currently authenticated principal.
 //  This converter is now registered with Spring's formatting registry, which is part of the overall ConversionService.
 public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationToken> {
+
+    @Value("${keycloak.resource}")
+    private String keycloakClientId;
 
     // The JwtGrantedAuthoritiesConverter class converts Jwt to Collection<GrantedAuthority> where GrantedAuthority contains String getAuthority()
     private final JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
@@ -51,7 +55,7 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
         if (resourceAccess == null) {
             return Set.of();
         }
-        Map<String, Object> resource = (Map<String, Object>) resourceAccess.get("my-apple-web");
+        Map<String, Object> resource = (Map<String, Object>) resourceAccess.get(keycloakClientId);
         if (resource == null) {
             return Set.of();
         }

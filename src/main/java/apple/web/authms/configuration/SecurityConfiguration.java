@@ -34,9 +34,11 @@ import java.util.Collections;
 public class SecurityConfiguration {
 
     private final String keycloakIssuerUri;
+
     // Constructor injection for the Keycloak issuer URI
-    public SecurityConfiguration(@Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}") String keycloakIssuerUri) {
-        this.keycloakIssuerUri = keycloakIssuerUri;
+    public SecurityConfiguration( @Value("${keycloak.auth-server-url}") String keycloakAuthServerUrl,
+                                  @Value("${keycloak.realm}") String keycloakRealm) {
+        this.keycloakIssuerUri =  keycloakAuthServerUrl + "/realms/" + keycloakRealm;
     }
 
     // Indicates that the method will return an object that should be registered as a bean in the Spring application context.
