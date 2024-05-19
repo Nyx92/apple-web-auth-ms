@@ -53,6 +53,7 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
     private Collection<? extends GrantedAuthority> extractResourceRoles(Jwt jwt) {
         Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
         if (resourceAccess == null) {
+            // return empty collection
             return Set.of();
         }
         Map<String, Object> resource = (Map<String, Object>) resourceAccess.get(keycloakClientId);
