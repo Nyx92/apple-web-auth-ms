@@ -59,6 +59,7 @@ public class SecurityConfiguration {
                 // Starts a chain to specify that authorization is required for HTTP requests.
                 .authorizeHttpRequests(auth -> auth
                         // Applies the subsequent rules to all requests.
+                        .requestMatchers("/api/v1/keycloak/login").permitAll() // Allow unauthenticated access to /login
                         // Specifies that all requests must be authenticated; the client must provide valid credentials.
                         .anyRequest().authenticated()
                 )

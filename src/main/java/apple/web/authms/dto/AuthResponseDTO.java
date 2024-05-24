@@ -14,8 +14,5 @@ import java.util.List;
 @Setter
 public class AuthResponseDTO {
     private String token;
-    private String userId;
-    private String username;
-    private String email;
-    private List<String> roles;
+    private String refreshToken;
 }

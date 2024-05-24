@@ -9,6 +9,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.Map;
@@ -22,6 +23,7 @@ import java.util.stream.Stream;
 // The Converter interface in this context comes from the Spring Framework and is a generic interface that defines a single method for converting an object of one type into another.
 // AbstractAuthenticationToken is a base class for Authentication implementations that are used to store details about the currently authenticated principal.
 //  This converter is now registered with Spring's formatting registry, which is part of the overall ConversionService.
+@Component
 public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationToken> {
 
     @Value("${keycloak.resource}")

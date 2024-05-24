@@ -30,9 +30,6 @@ public class KeycloakService {
     @Value("${keycloak.resource}")
     private String keycloakClientId;
 
-    @Value("${keycloak.credentials.secret}")
-    private String keycloakClientSecret;
-
     private final JwtDecoder jwtDecoder;
     private final JwtAuthConverter jwtAuthConverter;
 
@@ -53,7 +50,6 @@ public class KeycloakService {
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("grant_type", "password");
         map.add("client_id", keycloakClientId);
-        map.add("client_secret", keycloakClientSecret);
         map.add("username", loginRequest.getUsername());
         map.add("password", loginRequest.getPassword());
         // Create HttpEntity, this wraps the headers and body in an HttpEntity object.
@@ -71,16 +67,10 @@ public class KeycloakService {
             if (responseBody != null && responseBody.containsKey("access_token")) {
                 // token would be the jwt token received from keycloak on auth success
                 String token = (String) responseBody.get("access_token");
-                // decode the jwt token to get keycloak's fields
-                Jwt jwt = jwtDecoder.decode(token);
-                String userId = jwt.getSubject();
-                String username = jwt.getClaimAsString("preferred_username");
-                String email = jwt.getClaimAsString("email");
-                // Extract roles using utility method
-                //  the roles in the realm_access claim are nested inside a map. This is why you need to extract the realm_access claim as a map and then navigate to the roles.
-                List<String> roles = JwtUtils.extractRoles(jwt);
-
-                return new AuthResponseDTO(token, userId, username, email, roles);
+                // refresh token is received from keycloak on auth success
+                String refreshToken = (String) responseBody.get("refresh_token");
+                // return the token along with the decoded user details to the frontend on login
+                return new AuthResponseDTO(token, refreshToken);
             } else {
                 throw new Exception("Invalid response from authentication server");
             }
