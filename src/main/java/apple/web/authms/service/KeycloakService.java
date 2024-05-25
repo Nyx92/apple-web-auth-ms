@@ -78,4 +78,30 @@ public class KeycloakService {
             throw new Exception("Invalid credentials");
         }
     }
+
+    public AuthResponseDTO refreshToken(String refreshToken) throws Exception {
+        RestTemplate restTemplate = new RestTemplate();
+        String authUrl = keycloakAuthServerUrl + "/realms/" + keycloakRealm + "/protocol/openid-connect/token";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+        map.add("grant_type", "refresh_token");
+        map.add("client_id", keycloakClientId);
+        map.add("refresh_token", refreshToken);
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(authUrl, HttpMethod.POST, request, new ParameterizedTypeReference<Map<String, Object>>() {});
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            Map<String, Object> responseBody = response.getBody();
+            if (responseBody != null && responseBody.containsKey("access_token")) {
+                String token = (String) responseBody.get("access_token");
+                String newRefreshToken = (String) responseBody.get("refresh_token");
+                return new AuthResponseDTO(token, newRefreshToken);
+            } else {
+                throw new Exception("Invalid response from authentication server");
+            }
+        } else {
+            throw new Exception("Invalid refresh token");
+        }
+    }
 }

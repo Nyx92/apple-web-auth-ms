@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 
 // This annotation is used on a class to make it handle web requests.
 // It means that whatever is returned by methods in the class is directly
@@ -40,6 +42,17 @@ public class KeycloakController {
         // The try block in Java is used for exception handling. It allows you to write code that might throw exceptions, and to handle those exceptions gracefully, rather than letting the program crash.
         try {
             AuthResponseDTO authResponse = keycloakService.authenticate(loginRequestDTO);
+            return ResponseEntity.ok(authResponse);
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body("Invalid credentials");
+        }
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refresh(@RequestBody Map<String, String> body) {
+        try {
+            String refreshToken = body.get("refreshToken");
+            AuthResponseDTO authResponse = keycloakService.refreshToken(refreshToken);
             return ResponseEntity.ok(authResponse);
         } catch (Exception e) {
             return ResponseEntity.status(401).body("Invalid credentials");
