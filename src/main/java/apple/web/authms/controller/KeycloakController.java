@@ -51,7 +51,6 @@ public class KeycloakController {
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@RequestBody Map<String, String> body) {
         try {
-            System.out.println("refreshing");
             String refreshToken = body.get("refreshToken");
             AuthResponseDTO authResponse = keycloakService.refreshToken(refreshToken);
             return ResponseEntity.ok(authResponse);
