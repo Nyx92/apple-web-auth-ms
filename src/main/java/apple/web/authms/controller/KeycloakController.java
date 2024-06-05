@@ -1,6 +1,7 @@
 package apple.web.authms.controller;
 import apple.web.authms.dto.LoginRequestDTO;
 import apple.web.authms.dto.AuthResponseDTO;
+import apple.web.authms.dto.SignupRequestDTO;
 import apple.web.authms.service.KeycloakService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +38,7 @@ public class KeycloakController {
         this.keycloakService = keycloakService;
     }
 
+    // handles user login
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginRequestDTO) {
         // The try block in Java is used for exception handling. It allows you to write code that might throw exceptions, and to handle those exceptions gracefully, rather than letting the program crash.
@@ -48,11 +50,24 @@ public class KeycloakController {
         }
     }
 
+    // handles user's jwt token refresh
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@RequestBody Map<String, String> body) {
         try {
             String refreshToken = body.get("refreshToken");
             AuthResponseDTO authResponse = keycloakService.refreshToken(refreshToken);
+            return ResponseEntity.ok(authResponse);
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body("Invalid credentials");
+        }
+    }
+
+    // handles user signup
+    @PostMapping("/signup")
+    public ResponseEntity<?> login(@RequestBody SignupRequestDTO signupRequestDTO) {
+        // The try block in Java is used for exception handling. It allows you to write code that might throw exceptions, and to handle those exceptions gracefully, rather than letting the program crash.
+        try {
+            AuthResponseDTO authResponse = keycloakService.authenticate(signupRequestDTO);
             return ResponseEntity.ok(authResponse);
         } catch (Exception e) {
             return ResponseEntity.status(401).body("Invalid credentials");
