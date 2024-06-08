@@ -11,5 +11,6 @@ public class SignupRequestDTO {
     private String country;
     private String dateOfBirth;
     private String email;
+    private int phoneNumber;
     private String password;
 }

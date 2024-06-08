@@ -64,13 +64,13 @@ public class KeycloakController {
 
     // handles user signup
     @PostMapping("/signup")
-    public ResponseEntity<?> login(@RequestBody SignupRequestDTO signupRequestDTO) {
+    public ResponseEntity<?> signup(@RequestBody SignupRequestDTO signupRequestDTO) {
         // The try block in Java is used for exception handling. It allows you to write code that might throw exceptions, and to handle those exceptions gracefully, rather than letting the program crash.
         try {
-            AuthResponseDTO authResponse = keycloakService.authenticate(signupRequestDTO);
+            AuthResponseDTO authResponse = keycloakService.signup(signupRequestDTO);
             return ResponseEntity.ok(authResponse);
         } catch (Exception e) {
-            return ResponseEntity.status(401).body("Invalid credentials");
+            return ResponseEntity.status(401).body("Signup failed");
         }
     }
 
