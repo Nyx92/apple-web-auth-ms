@@ -15,6 +15,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -22,6 +24,8 @@ import java.util.HashMap;
 
 @Service
 public class KeycloakService {
+
+    private static final Logger logger = LoggerFactory.getLogger(KeycloakService.class);
 
     @Value("${keycloak.auth-server-url}")
     private String keycloakAuthServerUrl;
@@ -48,6 +52,8 @@ public class KeycloakService {
 
     // Get admin access token method for sign up service
     private String getAdminAccessToken() throws Exception {
+        logger.info("Requesting admin access token from Keycloak");
+
         RestTemplate restTemplate = new RestTemplate();
         String authUrl = keycloakAuthServerUrl + "/realms/" + keycloakRealm + "/protocol/openid-connect/token";
 
@@ -66,11 +72,14 @@ public class KeycloakService {
         if (response.getStatusCode() == HttpStatus.OK) {
             Map<String, Object> responseBody = response.getBody();
             if (responseBody != null && responseBody.containsKey("access_token")) {
+                logger.debug("Admin access token received successfully");
                 return (String) responseBody.get("access_token");
             } else {
+                logger.error("Invalid response from authentication server: {}", responseBody);
                 throw new Exception("Invalid response from authentication server");
             }
         } else {
+            logger.error("Failed to obtain admin access token. Status: {}, Response: {}", response.getStatusCode(), response);
             throw new Exception("Invalid credentials");
         }
     }
@@ -78,6 +87,8 @@ public class KeycloakService {
 
     // this method authenticates a user
     public AuthResponseDTO authenticate(LoginRequestDTO loginRequest) throws Exception {
+        logger.info("Starting authentication process for username: {}", loginRequest.getUsername());
+
         // RestTemplate is a synchronous client provided by the Spring Framework for making HTTP requests.
         RestTemplate restTemplate = new RestTemplate();
         // Prepare the URL
@@ -110,18 +121,23 @@ public class KeycloakService {
                 String token = (String) responseBody.get("access_token");
                 // refresh token is received from keycloak on auth success
                 String refreshToken = (String) responseBody.get("refresh_token");
+                logger.info("Authentication successful for username: {}", loginRequest.getUsername());
                 // return the token along with the decoded user details to the frontend on login
                 return new AuthResponseDTO(token, refreshToken);
             } else {
+                logger.error("Invalid response from authentication server: {}", responseBody);
                 throw new Exception("Invalid response from authentication server");
             }
         } else {
+            logger.error("Authentication failed for username: {}. Status: {}, Response: {}", loginRequest.getUsername(), response.getStatusCode(), response);
             throw new Exception("Invalid credentials");
         }
     }
 
     // this method sends a refresh token and authenticates a user
     public AuthResponseDTO refreshToken(String refreshToken) throws Exception {
+        logger.info("Starting refresh token process");
+
         RestTemplate restTemplate = new RestTemplate();
         String authUrl = keycloakAuthServerUrl + "/realms/" + keycloakRealm + "/protocol/openid-connect/token";
         HttpHeaders headers = new HttpHeaders();
@@ -138,17 +154,22 @@ public class KeycloakService {
             if (responseBody != null && responseBody.containsKey("access_token")) {
                 String token = (String) responseBody.get("access_token");
                 String newRefreshToken = (String) responseBody.get("refresh_token");
+                logger.info("Refresh token successful");
                 return new AuthResponseDTO(token, newRefreshToken);
             } else {
+                logger.error("Invalid response from authentication server: {}", responseBody);
                 throw new Exception("Invalid response from authentication server");
             }
         } else {
+            logger.error("Refresh token failed. Status: {}, Response: {}", response.getStatusCode(), response);
             throw new Exception("Invalid refresh token");
         }
     }
 
     // this method is used when a user signs up - help me edit this
     public AuthResponseDTO signup(SignupRequestDTO userSignUpDetails) throws Exception {
+        logger.info("Starting user signup process for email: {}", userSignUpDetails.getEmail());
+
         // get the admin access token via the method above
         String adminAccessToken = getAdminAccessToken();
         RestTemplate restTemplate = new RestTemplate();
@@ -171,6 +192,7 @@ public class KeycloakService {
         ResponseEntity<String> response = restTemplate.exchange(createUserUrl, HttpMethod.POST, request, String.class);
 
         if (response.getStatusCode() == HttpStatus.CREATED) {
+            logger.info("User created successfully in Keycloak for email: {}", userSignUpDetails.getEmail());
             // Get the created user's ID
             String userId = response.getHeaders().getLocation().getPath().split("/")[response.getHeaders().getLocation().getPath().split("/").length - 1];
 
@@ -187,6 +209,7 @@ public class KeycloakService {
 
             return new AuthResponseDTO("User created successfully", null);
         } else {
+            logger.error("User creation failed in Keycloak for email: {}. Status: {}, Response: {}", userSignUpDetails.getEmail(), response.getStatusCode(), response);
             throw new Exception("User creation failed");
         }
     }

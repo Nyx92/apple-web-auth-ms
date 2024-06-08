@@ -10,6 +10,7 @@ public class SignupRequestDTO {
     private String lastName;
     private String country;
     private String dateOfBirth;
+    private String username;
     private String email;
     private int phoneNumber;
     private String password;
