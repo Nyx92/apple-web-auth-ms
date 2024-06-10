@@ -61,7 +61,8 @@ public class SecurityConfiguration {
                         // Applies the subsequent rules to all requests.
                         .requestMatchers("/api/v1/keycloak/login").permitAll() // Allow unauthenticated access to /login
                         .requestMatchers("/api/v1/keycloak/refresh").permitAll() // Allow unauthenticated access to /refresh
-                        .requestMatchers("/api/v1/keycloak/signup").permitAll() // Allow unauthenticated access to /login
+                        .requestMatchers("/api/v1/keycloak/signup").permitAll() // Allow unauthenticated access to /signup
+                        .requestMatchers("/api/v1/keycloak/verify-email").permitAll() // Allow unauthenticated access to /login
                         // Specifies that all requests must be authenticated; the client must provide valid credentials.
                         .anyRequest().authenticated()
                 )

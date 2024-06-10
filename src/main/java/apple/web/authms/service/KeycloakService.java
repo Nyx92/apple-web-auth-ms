@@ -116,6 +116,29 @@ public class KeycloakService {
         }
     }
 
+    public void verifyEmail(String key) throws Exception {
+        logger.info("Verifying email with key: {}", key);
+
+        RestTemplate restTemplate = new RestTemplate();
+        String verifyEmailUrl = keycloakAuthServerUrl + "/realms/" + keycloakRealm + "/login-actions/action-token?key=" + key;
+
+        HttpHeaders headers = new HttpHeaders();
+        HttpEntity<?> request = new HttpEntity<>(headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(verifyEmailUrl, HttpMethod.GET, request, String.class);
+            if (response.getStatusCode() == HttpStatus.OK) {
+                logger.info("Email verified successfully for key: {}", key);
+            } else {
+                logger.error("Failed to verify email. Status: {}, Response: {}", response.getStatusCode(), response);
+                throw new Exception("Failed to verify email");
+            }
+        } catch (Exception e) {
+            logger.error("Exception occurred while verifying email: {}", e.getMessage(), e);
+            throw e;
+        }
+    }
+
     // this method authenticates a user
     public AuthResponseDTO authenticate(LoginRequestDTO loginRequest) throws Exception {
         logger.info("Starting authentication process for username: {}", loginRequest.getUsername());
