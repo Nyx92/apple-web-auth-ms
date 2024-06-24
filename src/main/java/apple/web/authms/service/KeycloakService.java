@@ -1,10 +1,8 @@
 package apple.web.authms.service;
 
-import apple.web.authms.configuration.JwtAuthConverter;
 import apple.web.authms.dto.AuthResponseDTO;
 import apple.web.authms.dto.LoginRequestDTO;
 import apple.web.authms.dto.SignupRequestDTO;
-import apple.web.authms.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -18,7 +16,6 @@ import org.springframework.util.MultiValueMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -42,13 +39,13 @@ public class KeycloakService {
     @Value("${keycloak.admin-password}")
     private String keycloakAdminPassword;
 
-    private final JwtDecoder jwtDecoder;
-    private final JwtAuthConverter jwtAuthConverter;
-
-    public KeycloakService(JwtDecoder jwtDecoder, JwtAuthConverter jwtAuthConverter) {
-        this.jwtDecoder = jwtDecoder;
-        this.jwtAuthConverter = jwtAuthConverter;
-    }
+//    private final JwtDecoder jwtDecoder;
+//    private final JwtAuthConverter jwtAuthConverter;
+//
+//    public KeycloakService(JwtDecoder jwtDecoder, JwtAuthConverter jwtAuthConverter) {
+//        this.jwtDecoder = jwtDecoder;
+//        this.jwtAuthConverter = jwtAuthConverter;
+//    }
 
     // this method gets admin access token method for sign up service
     private String getAdminAccessToken() throws Exception {
@@ -116,28 +113,57 @@ public class KeycloakService {
         }
     }
 
-    public void verifyEmail(String key) throws Exception {
-        logger.info("Verifying email with key: {}", key);
+    public void verifyEmailByUserId(String userId) throws Exception {
+        logger.info("Verifying user's email with id: {}", userId);
 
+        String adminAccessToken = getAdminAccessToken();
         RestTemplate restTemplate = new RestTemplate();
-        String verifyEmailUrl = keycloakAuthServerUrl + "/realms/" + keycloakRealm + "/login-actions/action-token?key=" + key;
+        String userUrl = keycloakAuthServerUrl + "/admin/realms/" + keycloakRealm + "/users/" + userId;
 
         HttpHeaders headers = new HttpHeaders();
-        HttpEntity<?> request = new HttpEntity<>(headers);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(adminAccessToken);
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("emailVerified", true);
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(updates, headers);
 
         try {
-            ResponseEntity<String> response = restTemplate.exchange(verifyEmailUrl, HttpMethod.GET, request, String.class);
-            if (response.getStatusCode() == HttpStatus.OK) {
-                logger.info("Email verified successfully for key: {}", key);
-            } else {
-                logger.error("Failed to verify email. Status: {}, Response: {}", response.getStatusCode(), response);
-                throw new Exception("Failed to verify email");
-            }
+            restTemplate.exchange(userUrl, HttpMethod.PUT, request, Void.class);
+            logger.info("Email verified successfully for user: {}", userId);
         } catch (Exception e) {
-            logger.error("Exception occurred while verifying email: {}", e.getMessage(), e);
+            logger.error("Exception occurred while verifying email via admin API: {}", e.getMessage(), e);
             throw e;
         }
     }
+
+//    public void verifyEmail(String key) throws Exception {
+//        logger.info("Verifying email with key: {}", key);
+//
+//        String adminAccessToken = getAdminAccessToken();
+//        RestTemplate restTemplate = new RestTemplate();
+//        String verifyEmailUrl = keycloakAuthServerUrl + "/realms/" + keycloakRealm + "/login-actions/action-token?key=" + key;
+//
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setBearerAuth(adminAccessToken);  // Include the admin access token in the headers
+//        HttpEntity<?> request = new HttpEntity<>(headers);
+//
+//        try {
+//            ResponseEntity<String> response = restTemplate.exchange(verifyEmailUrl, HttpMethod.GET, request, String.class);
+//            logger.info("Response Body: {}", response.getBody()); // Log the response body
+//            if (response.getStatusCode() == HttpStatus.OK) {
+//                logger.info("Email verified successfully for key: {}", key);
+//            } else {
+//                logger.error("Failed to verify email. Status: {}, Response: {}", response.getStatusCode(), response);
+//                throw new Exception("Failed to verify email");
+//            }
+//        } catch (Exception e) {
+//            logger.error("Exception occurred while verifying email: {}", e.getMessage(), e);
+//            throw e;
+//        }
+//    }
+
 
     // this method authenticates a user
     public AuthResponseDTO authenticate(LoginRequestDTO loginRequest) throws Exception {

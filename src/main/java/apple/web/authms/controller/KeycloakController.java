@@ -74,7 +74,7 @@ public class KeycloakController {
         }
     }
 
-    @GetMapping
+    @GetMapping("/hello")
     @PreAuthorize("hasRole('client_user')")
     public String hello() {
         return "Hello World";

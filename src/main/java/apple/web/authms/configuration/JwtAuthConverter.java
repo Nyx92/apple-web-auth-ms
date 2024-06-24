@@ -1,5 +1,8 @@
 package apple.web.authms.configuration;
 
+import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.lang.NonNull;
@@ -26,16 +29,30 @@ import java.util.stream.Stream;
 @Component
 public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationToken> {
 
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthConverter.class);
+
     @Value("${keycloak.resource}")
     private String keycloakClientId;
 
     // The JwtGrantedAuthoritiesConverter class converts Jwt to Collection<GrantedAuthority> where GrantedAuthority contains String getAuthority()
     private final JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
 
+    // Constructor to log initialization
+    public JwtAuthConverter() {
+        logger.info("JwtAuthConverter instantiated");
+    }
+
+    @PostConstruct
+    public void postConstruct() {
+        logger.info("JwtAuthConverter initialized with keycloakClientId: {}", keycloakClientId);
+    }
+
     //  The method signature shows that it takes a Jwt object as input and returns an AbstractAuthenticationToken
     //  Basically what this does is to combine authorities in claims together, identified using jwtGrantedAuthoritiesConverter and extractResourceRoles on a single jwt
     @Override
     public AbstractAuthenticationToken convert(@NonNull Jwt jwt) {
+        logger.info("JwtAuthConverter convert called with keycloakClientId: {}", keycloakClientId);
+
         //  It combines authorities from two sources: standard ones extracted by jwtGrantedAuthoritiesConverter (which typically reads scopes or similar claims from the JWT)
         //  and custom ones derived from our application-specific method extractResourceRoles.
         //  Stream.concat takes two streams and joins them together into one stream.
@@ -54,15 +71,20 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
 
     private Collection<? extends GrantedAuthority> extractResourceRoles(Jwt jwt) {
         Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
+
+        logger.info("Resource Access: {}", resourceAccess);
         if (resourceAccess == null) {
             // return empty collection
             return Set.of();
         }
+
         Map<String, Object> resource = (Map<String, Object>) resourceAccess.get(keycloakClientId);
+        logger.info("Resource: {}", resource); // Add this line
         if (resource == null) {
             return Set.of();
         }
         Collection<String> resourceRoles = (Collection<String>) resource.get("roles");
+        logger.info("Resource Roles: {}", resourceRoles); // Add this line
         return resourceRoles.stream()
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                 .collect(Collectors.toSet());
