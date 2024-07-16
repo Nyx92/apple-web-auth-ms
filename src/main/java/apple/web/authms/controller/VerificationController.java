@@ -1,5 +1,6 @@
 package apple.web.authms.controller;
 
+import apple.web.authms.configuration.JwtAuthConverter;
 import apple.web.authms.service.KeycloakService;
 import apple.web.authms.service.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.web.bind.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,20 +31,13 @@ public class VerificationController {
 
     @PostMapping("/verify-email")
     public ResponseEntity<String> verifyEmail(@RequestBody Map<String, String> body) {
-        String key = body.get("key");
-        logger.info("key: {}", key);
-        if (key == null || key.isEmpty()) {
-            return ResponseEntity.badRequest().body("Key is missing");
+        logger.info(body.toString());
+        String userId = body.get("userId");
+        logger.info("userId: {}", userId);
+        if (userId == null || userId.isEmpty()) {
+            return ResponseEntity.badRequest().body("userId is missing");
         }
         try {
-            logger.info("Trying to decode");
-            // Decode the JWT to extract the user ID
-            Jwt decodedJwt = tokenService.decodeHs512Jwt(key);
-
-            logger.info("Decoded JWT: {}", decodedJwt);
-            String userId = decodedJwt.getClaimAsString("sub");
-
-
             keycloakService.verifyEmailByUserId(userId);
             return ResponseEntity.ok("Email verified successfully");
         } catch (Exception e) {

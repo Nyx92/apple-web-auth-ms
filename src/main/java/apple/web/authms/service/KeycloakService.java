@@ -71,7 +71,7 @@ public class KeycloakService {
             if (response.getStatusCode() == HttpStatus.OK) {
                 Map<String, Object> responseBody = response.getBody();
                 if (responseBody != null && responseBody.containsKey("access_token")) {
-                    logger.info("Admin access token received successfully");
+                    logger.info("Admin access token received successfully {}", responseBody.get("access_token"));
                     return (String) responseBody.get("access_token");
                 } else {
                     logger.error("Invalid response from authentication server: {}", responseBody);

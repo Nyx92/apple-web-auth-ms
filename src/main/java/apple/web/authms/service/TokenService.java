@@ -8,6 +8,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Service;
 
+// currently the Token Service is not required, as I have no idea how to change keycloak to send RS256 for email verification or
+// configure a secret key for HS512
 @Service
 public class TokenService {
 
@@ -16,7 +18,6 @@ public class TokenService {
     private final JwtDecoder rs256JwtDecoder;
     private final JwtDecoder hs512JwtDecoder;
     private final String secretKey;
-
 
     @Autowired
     public TokenService(JwtDecoder rs256JwtDecoder, JwtDecoder hs512JwtDecoder, String secretKey) {

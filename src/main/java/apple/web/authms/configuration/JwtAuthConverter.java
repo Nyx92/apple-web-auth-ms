@@ -69,6 +69,7 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
         return new JwtAuthenticationToken(jwt, authorities, getPrincipalClaimName(jwt));
     }
 
+    // extractResourceRoles extracts the roles' values from the decoded jwt token from keycloak
     private Collection<? extends GrantedAuthority> extractResourceRoles(Jwt jwt) {
         Map<String, Object> resourceAccess = jwt.getClaim("resource_access");
 
@@ -79,7 +80,7 @@ public class JwtAuthConverter implements Converter<Jwt, AbstractAuthenticationTo
         }
 
         Map<String, Object> resource = (Map<String, Object>) resourceAccess.get(keycloakClientId);
-        logger.info("Resource: {}", resource); // Add this line
+        logger.info("Resource: {}", resource);
         if (resource == null) {
             return Set.of();
         }
