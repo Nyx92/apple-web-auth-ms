@@ -13,5 +13,6 @@ public class SignupRequestDTO {
     private String username;
     private String email;
     private int phoneNumber;
+    private int countryCode;
     private String password;
 }

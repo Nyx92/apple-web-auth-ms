@@ -39,14 +39,6 @@ public class KeycloakService {
     @Value("${keycloak.admin-password}")
     private String keycloakAdminPassword;
 
-//    private final JwtDecoder jwtDecoder;
-//    private final JwtAuthConverter jwtAuthConverter;
-//
-//    public KeycloakService(JwtDecoder jwtDecoder, JwtAuthConverter jwtAuthConverter) {
-//        this.jwtDecoder = jwtDecoder;
-//        this.jwtAuthConverter = jwtAuthConverter;
-//    }
-
     // this method gets admin access token method for sign up service
     private String getAdminAccessToken() throws Exception {
         logger.info("Requesting admin access token from Keycloak");
@@ -113,6 +105,7 @@ public class KeycloakService {
         }
     }
 
+    // this method verifies user's email through user id
     public void verifyEmailByUserId(String userId) throws Exception {
         logger.info("Verifying user's email with id: {}", userId);
 
@@ -138,34 +131,7 @@ public class KeycloakService {
         }
     }
 
-//    public void verifyEmail(String key) throws Exception {
-//        logger.info("Verifying email with key: {}", key);
-//
-//        String adminAccessToken = getAdminAccessToken();
-//        RestTemplate restTemplate = new RestTemplate();
-//        String verifyEmailUrl = keycloakAuthServerUrl + "/realms/" + keycloakRealm + "/login-actions/action-token?key=" + key;
-//
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.setBearerAuth(adminAccessToken);  // Include the admin access token in the headers
-//        HttpEntity<?> request = new HttpEntity<>(headers);
-//
-//        try {
-//            ResponseEntity<String> response = restTemplate.exchange(verifyEmailUrl, HttpMethod.GET, request, String.class);
-//            logger.info("Response Body: {}", response.getBody()); // Log the response body
-//            if (response.getStatusCode() == HttpStatus.OK) {
-//                logger.info("Email verified successfully for key: {}", key);
-//            } else {
-//                logger.error("Failed to verify email. Status: {}, Response: {}", response.getStatusCode(), response);
-//                throw new Exception("Failed to verify email");
-//            }
-//        } catch (Exception e) {
-//            logger.error("Exception occurred while verifying email: {}", e.getMessage(), e);
-//            throw e;
-//        }
-//    }
-
-
-    // this method authenticates a user
+    // this method authenticates a user when they log in into the app using a username and password
     public AuthResponseDTO authenticate(LoginRequestDTO loginRequest) throws Exception {
         logger.info("Starting authentication process for username: {}", loginRequest.getUsername());
 
@@ -208,6 +174,7 @@ public class KeycloakService {
                     // return the token along with the decoded user details to the frontend on login
                     return new AuthResponseDTO(token, refreshToken);
                 } else {
+                    // failed login
                     logger.error("Invalid response from authentication server: {}", responseBody);
                     throw new Exception("Invalid response from authentication server");
                 }
@@ -274,6 +241,8 @@ public class KeycloakService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(adminAccessToken);
 
+        logger.info("this is country code {}", userSignUpDetails.getCountryCode());
+
         Map<String, Object> user = new HashMap<>();
         user.put("username", userSignUpDetails.getUsername());
         user.put("enabled", true);
@@ -282,6 +251,7 @@ public class KeycloakService {
         user.put("email", userSignUpDetails.getEmail());
         user.put("attributes", Map.of(
                 "phoneNumber", userSignUpDetails.getPhoneNumber(),
+                "countryCode", userSignUpDetails.getCountryCode(),
                 "country", userSignUpDetails.getCountry(),
                 "dateOfBirth", userSignUpDetails.getDateOfBirth()
         ));
