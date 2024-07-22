@@ -241,8 +241,6 @@ public class KeycloakService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(adminAccessToken);
 
-        logger.info("this is country code {}", userSignUpDetails.getCountryCode());
-
         Map<String, Object> user = new HashMap<>();
         user.put("username", userSignUpDetails.getUsername());
         user.put("enabled", true);

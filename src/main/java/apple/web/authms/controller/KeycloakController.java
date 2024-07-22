@@ -3,6 +3,8 @@ import apple.web.authms.dto.LoginRequestDTO;
 import apple.web.authms.dto.AuthResponseDTO;
 import apple.web.authms.dto.SignupRequestDTO;
 import apple.web.authms.service.KeycloakService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,6 +30,8 @@ public class KeycloakController {
     // Marking the KeycloakService field as final ensures that the reference to the service cannot be changed, ensuring that it is thread-safe by default. There is no risk of another thread changing the reference
     // It clearly indicates that this dependency is an essential part of the class’s state and should not be replaced.
     private final KeycloakService keycloakService;
+
+    private static final Logger logger = LoggerFactory.getLogger(KeycloakController.class);
 
     // Constructor Injection. With constructor injection, you can declare your dependencies as final, which enforces immutability.
     // This means that the injected dependency cannot be changed after the object is constructed, leading to safer and more predictable code.
