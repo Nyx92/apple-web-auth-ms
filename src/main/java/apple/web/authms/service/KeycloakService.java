@@ -9,6 +9,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
@@ -59,7 +60,8 @@ public class KeycloakService {
         ResponseEntity<Map<String, Object>> response;
         // Make the HTTP Request:
         try {
-            response = restTemplate.exchange(authUrl, HttpMethod.POST, request, new ParameterizedTypeReference<Map<String, Object>>() {});
+            response = restTemplate.exchange(authUrl, HttpMethod.POST, request, new ParameterizedTypeReference<Map<String, Object>>() {
+            });
             if (response.getStatusCode() == HttpStatus.OK) {
                 Map<String, Object> responseBody = response.getBody();
                 if (responseBody != null && responseBody.containsKey("access_token")) {
@@ -162,7 +164,8 @@ public class KeycloakService {
         // Make the HTTP Request:
         try {
             // new ParameterizedTypeReference<Map<String, Object>>() {}: captures the generic type information at runtime, allowing RestTemplate to correctly deserialize the response.
-            response = restTemplate.exchange(authUrl, HttpMethod.POST, request, new ParameterizedTypeReference<Map<String, Object>>() {});
+            response = restTemplate.exchange(authUrl, HttpMethod.POST, request, new ParameterizedTypeReference<Map<String, Object>>() {
+            });
             if (response.getStatusCode() == HttpStatus.OK) {
                 Map<String, Object> responseBody = response.getBody();
                 if (responseBody != null && responseBody.containsKey("access_token")) {
@@ -207,7 +210,8 @@ public class KeycloakService {
         ResponseEntity<Map<String, Object>> response;
         // Make the HTTP Request:
         try {
-            response = restTemplate.exchange(authUrl, HttpMethod.POST, request, new ParameterizedTypeReference<Map<String, Object>>() {});
+            response = restTemplate.exchange(authUrl, HttpMethod.POST, request, new ParameterizedTypeReference<Map<String, Object>>() {
+            });
             if (response.getStatusCode() == HttpStatus.OK) {
                 Map<String, Object> responseBody = response.getBody();
                 if (responseBody != null && responseBody.containsKey("access_token")) {
@@ -275,13 +279,21 @@ public class KeycloakService {
                 // Send verification email
                 sendVerificationEmail(userId, adminAccessToken);
                 return new AuthResponseDTO("User created successfully", null);
-            } else {
-                logger.error("User creation failed in Keycloak for email: {}. Status: {}, Response: {}", userSignUpDetails.getEmail(), response.getStatusCode(), response);
-                throw new Exception("User creation failed");
             }
-        } catch (Exception e) {
-            logger.error("Exception occurred while creating user in Keycloak: {}", e.getMessage(), e);
-            throw e;
+            // This is a specific subclass of RestClientResponseException used in Spring's RestTemplate to represent HTTP 4xx client errors.
+            // It provides more context about the HTTP status code and the response body, making it easier to handle specific HTTP errors (e.g., 404 Not Found, 409 Conflict).
+        } catch (HttpClientErrorException e) {
+            logger.error("Exception occurred while creating user account {} in Keycloak: {}", userSignUpDetails.getEmail(), e.getMessage(), e);
+            if (e.getStatusCode() == HttpStatus.CONFLICT) {
+                if (e.getResponseBodyAsString().contains("User exists with same email")) {
+                    throw new Exception("User exists with same email");
+                } else if (e.getResponseBodyAsString().contains("User exists with same username")) {
+                    throw new Exception("User exists with same username");
+                }
+            }
         }
-    }
+        // Add a final catch-all error statement if the user creation is not successful
+        throw new Exception("User creation failed due to an unexpected error");
+        }
 }
+

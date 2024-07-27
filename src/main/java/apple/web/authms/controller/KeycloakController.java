@@ -74,7 +74,14 @@ public class KeycloakController {
             AuthResponseDTO authResponse = keycloakService.signup(signupRequestDTO);
             return ResponseEntity.ok(authResponse);
         } catch (Exception e) {
-            return ResponseEntity.status(401).body("Signup failed");
+            if (e.getMessage().contains("User exists with same email")) {
+                return ResponseEntity.status(409).body("Email already exists");
+            } else if (e.getMessage().contains("User exists with same username")) {
+                return ResponseEntity.status(409).body("Username already exists");
+            } else {
+                // 500 Internal Server Error to better reflect unexpected server-side issues
+                return ResponseEntity.status(500).body("Unexpected error occurred");
+            }
         }
     }
 
