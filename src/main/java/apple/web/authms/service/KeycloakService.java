@@ -175,20 +175,24 @@ public class KeycloakService {
                     String refreshToken = (String) responseBody.get("refresh_token");
                     logger.info("Authentication successful for username: {}", loginRequest.getUsername());
                     // return the token along with the decoded user details to the frontend on login
-                    return new AuthResponseDTO(token, refreshToken);
-                } else {
-                    // failed login
-                    logger.error("Invalid response from authentication server: {}", responseBody);
-                    throw new Exception("Invalid response from authentication server");
+                    return new AuthResponseDTO(token, refreshToken, "login successful");
                 }
-            } else {
-                logger.error("Authentication failed for username: {}. Status: {}, Response: {}", loginRequest.getUsername(), response.getStatusCode(), response);
-                throw new Exception("Invalid credentials");
             }
+        } catch (HttpClientErrorException.Unauthorized e) {
+            // Handle 401 Unauthorized separately
+            logger.error("Invalid credentials for username: {}", loginRequest.getUsername());
+            throw new Exception("Invalid credentials provided", e);
+        } catch (HttpClientErrorException e) {
+            // Handle other HTTP errors
+            logger.error("HTTP error during authentication for username: {}. Status: {}", loginRequest.getUsername(), e.getStatusCode());
+            throw new Exception("Authentication failed due to HTTP error", e);
         } catch (Exception e) {
-            logger.error("Exception occurred while requesting user's access token: {}", e.getMessage(), e);
-            throw e;
+            // Handle non-HTTP errors (e.g., network issues, unexpected server response)
+            logger.error("Unexpected error during authentication for username: {}", loginRequest.getUsername(), e);
+            throw new Exception("Authentication failed due to unexpected error", e);
         }
+        // We should never reach this point
+        throw new IllegalStateException("Unexpected error during authentication");
     }
 
     // this method sends a refresh token and authenticates a user
@@ -218,7 +222,7 @@ public class KeycloakService {
                     String token = (String) responseBody.get("access_token");
                     String newRefreshToken = (String) responseBody.get("refresh_token");
                     logger.info("Refresh token successful");
-                    return new AuthResponseDTO(token, newRefreshToken);
+                    return new AuthResponseDTO(token, newRefreshToken, "refresh token successful");
                 } else {
                     logger.error("Invalid response from authentication server: {}", responseBody);
                     throw new Exception("Invalid response from authentication server");
@@ -263,6 +267,8 @@ public class KeycloakService {
         // Make the HTTP Request:
         try {
             logger.info("Sending request to Keycloak: URL={}, Request={}", createUserUrl, request);
+            // RestTemplate is a synchronous client for performing HTTP requests, provided by the Spring Framework.
+            // The exchange method is versatile and can be used for making various types of HTTP requests (GET, POST, PUT, DELETE, etc.).
             response = restTemplate.exchange(createUserUrl, HttpMethod.POST, request, String.class);
             logger.info("Response received from Keycloak: Status={}, Body={}", response.getStatusCode(), response.getBody());
             if (response.getStatusCode() == HttpStatus.CREATED) {
@@ -278,7 +284,7 @@ public class KeycloakService {
 
                 // Send verification email
                 sendVerificationEmail(userId, adminAccessToken);
-                return new AuthResponseDTO("User created successfully", null);
+                return new AuthResponseDTO(null, null,"User created successfully");
             }
             // This is a specific subclass of RestClientResponseException used in Spring's RestTemplate to represent HTTP 4xx client errors.
             // It provides more context about the HTTP status code and the response body, making it easier to handle specific HTTP errors (e.g., 404 Not Found, 409 Conflict).

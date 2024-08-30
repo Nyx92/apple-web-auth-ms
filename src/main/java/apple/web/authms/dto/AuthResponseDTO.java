@@ -15,4 +15,5 @@ import java.util.List;
 public class AuthResponseDTO {
     private String token;
     private String refreshToken;
+    private String message;
 }

@@ -13,12 +13,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
-// Explanation of :
-// Request Filtering: When a request comes into your application, Spring Security intercepts it before it reaches any controller.
-// The security filters configured in  SecurityFilterChain are applied. If the filters require a valid JWT for certain or all paths, the incoming requests must include a valid JWT in their headers.
 
 
-// This tells Spring that the class is a factory method and can contain bean definitions.
+// @Configuration annotation tells Spring that this class contains configuration settings that should be applied to the Spring application context.
+// It also tells Spring that the class is a factory method and can contain bean definitions.
 @Configuration
 // @EnableWebSecurity is a marker annotation that is used to enable Spring Security’s web security support and provide the Spring MVC integration.
 // It essentially signals to Spring Framework to start considering the security configurations that you have set up in any WebSecurityConfigurer or more commonly, through HttpSecurity configurations.
@@ -42,7 +40,8 @@ public class SecurityConfiguration {
 
     // Indicates that the method will return an object that should be registered as a bean in the Spring application context.
     @Bean
-    // http: This is the instance of HttpSecurity that you are configuring. It is used to specify how HTTP requests should be secured in your application
+    // SecurityFilterChain defines how HTTP requests should be secured in your application.
+    // It is used to specify how HTTP requests should be secured in your application
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         // Apply CSRF disabling only to specific paths
@@ -62,6 +61,8 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/v1/keycloak/refresh").permitAll() // Allow unauthenticated access to /refresh
                         .requestMatchers("/api/v1/keycloak/signup").permitAll() // Allow unauthenticated access to /signup
                         .requestMatchers("/api/v1/keycloak/verify-email").permitAll() // Allow unauthenticated access to /login
+                        .requestMatchers("/api/v1/nifi/upload").permitAll() // Allow unauthenticated access to /login
+                        .requestMatchers("/api/v1/nifi/intermediary").permitAll() // Allow unauthenticated access to /login
                         // Specifies that all requests must be authenticated; the client must provide valid credentials.
                         .anyRequest().authenticated()
                 )

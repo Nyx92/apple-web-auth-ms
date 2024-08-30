@@ -13,6 +13,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Map;
 
@@ -42,7 +47,15 @@ public class KeycloakController {
         this.keycloakService = keycloakService;
     }
 
-    // handles user login
+    @Operation(summary = "Authenticates a user on login request")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User authenticated successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuthResponseDTO.class))),
+            @ApiResponse(responseCode = "401", description = "Invalid credentials",
+                    content = @Content(mediaType = "text/plain")),
+            @ApiResponse(responseCode = "500", description = "Unexpected error during authentication",
+                    content = @Content(mediaType = "text/plain"))
+    })
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginRequestDTO) {
         // The try block in Java is used for exception handling. It allows you to write code that might throw exceptions, and to handle those exceptions gracefully, rather than letting the program crash.
@@ -54,7 +67,13 @@ public class KeycloakController {
         }
     }
 
-    // handles user's jwt token refresh
+    @Operation(summary = "Handles JWT refresh request")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "JWT refreshed successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuthResponseDTO.class))),
+            @ApiResponse(responseCode = "401", description = "Invalid credentials",
+                    content = @Content(mediaType = "text/plain"))
+    })
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@RequestBody Map<String, String> body) {
         try {
@@ -66,7 +85,15 @@ public class KeycloakController {
         }
     }
 
-    // handles user signup
+    @Operation(summary = "Handles a user's signup request")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User signed up successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuthResponseDTO.class))),
+            @ApiResponse(responseCode = "409", description = "Conflict - Email or Username already exists",
+                    content = @Content(mediaType = "text/plain")),
+            @ApiResponse(responseCode = "500", description = "Unexpected error occurred",
+                    content = @Content(mediaType = "text/plain"))
+    })
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody SignupRequestDTO signupRequestDTO) {
         // The try block in Java is used for exception handling. It allows you to write code that might throw exceptions, and to handle those exceptions gracefully, rather than letting the program crash.

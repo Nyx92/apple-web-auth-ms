@@ -1,6 +1,5 @@
 package apple.web.authms.configuration;
 
-import apple.web.authms.service.TokenService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +28,8 @@ public class JwtDecoderConfiguration {
     private final String secretKey;
 
     // Constructor injection for the Keycloak issuer URI
+    // Benefits: Immutability - fields may be final
+    // Ease of Testing: easily mock or provide different values for testing
     public JwtDecoderConfiguration(
             @Value("${keycloak.auth-server-url}") String keycloakAuthServerUrl,
             @Value("${keycloak.realm}") String keycloakRealm,
